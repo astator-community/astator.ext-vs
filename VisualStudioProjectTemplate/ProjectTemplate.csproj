@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0-android</TargetFramework>
+		<OutputType>Library</OutputType>
+		<RootNamespace>$safeprojectname$</RootNamespace>
+		<UseMaui>true</UseMaui>
+
+		<SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="astator.Core" Version="*" />
+	</ItemGroup>
+
+	<ProjectExtensions>
+		<IsObfuscate>True</IsObfuscate>
+		<ApkBuilderConfigs>
+			<Label>$safeprojectname$</Label>
+			<PackageName>com.script.$safeprojectname$</PackageName>
+			<Version>1.0.0</Version>
+		</ApkBuilderConfigs>
+	</ProjectExtensions>
+
+</Project>
+

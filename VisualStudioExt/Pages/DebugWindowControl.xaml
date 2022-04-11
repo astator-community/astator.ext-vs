@@ -1,0 +1,113 @@
+﻿<UserControl
+    x:Class="VisualStudioExt.Pages.DebugWindowControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:v="clr-namespace:VisualStudioExt.Views"
+    xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+    Name="astator调试窗口"
+    d:DesignHeight="300"
+    d:DesignWidth="300"
+    Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style x:Key="ImgBtn" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type v:ImageButton}">
+                        <Grid x:Name="PART_Grid" Background="{TemplateBinding Background}">
+                            <Image
+                                Width="24"
+                                Source="{TemplateBinding Icon}"
+                                Stretch="Uniform" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="PART_Grid" Property="Background" Value="#80808080" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Margin="0,10" Orientation="Vertical">
+                <v:ImageButton
+                    Click="RunProject_Clicked"
+                    Cursor="Hand"
+                    Icon="pack://application:,,,/VisualStudioExt;component/Resources/run_1.png"
+                    Style="{StaticResource ImgBtn}"
+                    ToolTip="运行项目" />
+                <v:ImageButton
+                    Click="RunScript_Clicked"
+                    Cursor="Hand"
+                    Icon="pack://application:,,,/VisualStudioExt;component/Resources/run_2.png"
+                    Style="{StaticResource ImgBtn}"
+                    ToolTip="运行脚本" />
+                <v:ImageButton
+                    Click="SaveProject_Clicked"
+                    Cursor="Hand"
+                    Icon="pack://application:,,,/VisualStudioExt;component/Resources/save.png"
+                    Style="{StaticResource ImgBtn}"
+                    ToolTip="保存项目到设备" />
+                <v:ImageButton
+                    Click="Connect_Clicked"
+                    Cursor="Hand"
+                    Icon="pack://application:,,,/VisualStudioExt;component/Resources/connect.png"
+                    Style="{StaticResource ImgBtn}"
+                    ToolTip="连接设备" />
+                <v:ImageButton
+                    x:Name="ConnectLatestDevice"
+                    Click="ConnectLatestDevice_Clicked"
+                    Cursor="Hand"
+                    Icon="pack://application:,,,/VisualStudioExt;component/Resources/history.png"
+                    Style="{StaticResource ImgBtn}" />
+                <v:ImageButton
+                    Click="ClearLogging_Clicked"
+                    Cursor="Hand"
+                    Icon="pack://application:,,,/VisualStudioExt;component/Resources/clear.png"
+                    Style="{StaticResource ImgBtn}"
+                    ToolTip="清空日志" />
+            </StackPanel>
+            <Grid Grid.Column="1" Margin="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock
+                    Grid.Row="0"
+                    Margin="0,0,0,5"
+                    FontSize="15"
+                    FontWeight="SemiBold"
+                    Text="日志" />
+                <ScrollViewer
+                    x:Name="Scroller"
+                    Grid.Row="1"
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Auto">
+                    <TextBox
+                        x:Name="LogText"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                        IsReadOnly="True"
+                        TextChanged="LogText_TextChanged" />
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>
