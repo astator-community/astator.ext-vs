@@ -102,10 +102,7 @@
     <Resource Include="Resources\clear.png" />
     <Resource Include="Resources\connect.png" />
     <Resource Include="Resources\history.png" />
-    <Content Include="Resources\logo.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </Content>
+    <Resource Include="Resources\logo.png" />
     <Resource Include="Resources\run_1.png" />
     <Resource Include="Resources\run_2.png" />
     <Resource Include="Resources\save.png" />

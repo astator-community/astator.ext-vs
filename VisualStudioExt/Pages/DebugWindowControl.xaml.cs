@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using VisualStudioExt.Models;
@@ -57,6 +58,7 @@ namespace VisualStudioExt.Pages
 
         private void RunProject_Clicked(object sender, RoutedEventArgs e)
         {
+            TryConnectLatestHistoryDevice();
             if (!ClientCommands.CheckIsConnected() && !ServerCommands.CheckIsConnected())
             {
                 MessageBox.Show("未连接设备, 请连接后重试!");
@@ -67,6 +69,7 @@ namespace VisualStudioExt.Pages
 
         private void RunScript_Clicked(object sender, RoutedEventArgs e)
         {
+            TryConnectLatestHistoryDevice();
             if (!ClientCommands.CheckIsConnected() && !ServerCommands.CheckIsConnected())
             {
                 MessageBox.Show("未连接设备, 请连接后重试!");
@@ -77,6 +80,7 @@ namespace VisualStudioExt.Pages
 
         private void SaveProject_Clicked(object sender, RoutedEventArgs e)
         {
+            TryConnectLatestHistoryDevice();
             if (!ClientCommands.CheckIsConnected() && !ServerCommands.CheckIsConnected())
             {
                 MessageBox.Show("未连接设备, 请连接后重试!");
@@ -87,14 +91,7 @@ namespace VisualStudioExt.Pages
 
         private void Connect_Clicked(object sender, RoutedEventArgs e)
         {
-            var historyDevices = new List<string>();
-
-            if (File.Exists(historyDevicesPath))
-            {
-                var list = File.ReadAllLines(historyDevicesPath).ToList();
-                historyDevices = list.GetRange(0, list.Count > 10 ? 10 : list.Count);
-            }
-
+            List<string> historyDevices = GetHistoryDevices();
             var connect = new Connect(historyDevices);
             if (connect.ShowDialog() == true)
             {
@@ -109,6 +106,48 @@ namespace VisualStudioExt.Pages
                     _ = Models.ClientCommands.ConnectAsync(ip);
                 }
             }
+        }
+
+        /// <summary>
+        /// 尝试连接最后一次链接的设备
+        /// </summary>
+        /// <param name="waittingMillis"></param>
+        /// <returns></returns>
+        private bool TryConnectLatestHistoryDevice(int waittingMillis = 3000)
+        {
+            if (ClientCommands.CheckIsConnected() || ServerCommands.CheckIsConnected())
+            {
+                return true;
+            }
+            List<string> historyDevices = GetHistoryDevices();
+
+            if (historyDevices == null || historyDevices.Count < 0)
+            {
+                return false;
+            }
+            var ip = historyDevices.FirstOrDefault();
+            if (string.IsNullOrEmpty(ip))
+            {
+                return false;
+            }
+            DebugWindowControl.AddLogging($"尝试连接到最近的设备: {ip}");
+            Task.WaitAll(new[] { Models.ClientCommands.ConnectAsync(ip) }, waittingMillis);
+            var connected = !ClientCommands.CheckIsConnected() && !ServerCommands.CheckIsConnected();
+            DebugWindowControl.AddLogging($"链接到: {ip} {(connected ? "成功" : "失败")}");
+            return connected;
+        }
+
+        private List<string> GetHistoryDevices()
+        {
+            var historyDevices = new List<string>();
+
+            if (File.Exists(historyDevicesPath))
+            {
+                var list = File.ReadAllLines(historyDevicesPath).ToList();
+                historyDevices = list.GetRange(0, list.Count > 10 ? 10 : list.Count);
+            }
+
+            return historyDevices;
         }
 
         private void ConnectLatestDevice_Clicked(object sender, RoutedEventArgs e)
