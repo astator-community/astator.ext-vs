@@ -55,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Runtime.cs" />
+    <None Include="GlobalUsings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <None Include="Test.cs" />
   </ItemGroup>

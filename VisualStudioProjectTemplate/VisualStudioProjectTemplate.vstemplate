@@ -21,6 +21,7 @@
 			<ProjectItem ReplaceParameters="true" TargetFileName="Core\Runtime.cs">Runtime.cs</ProjectItem>
 			<ProjectItem ReplaceParameters="true" TargetFileName="Test.cs">Test.cs</ProjectItem>
 			<ProjectItem ReplaceParameters="true" OpenInEditor="true" TargetFileName="Program.cs">Program.cs</ProjectItem>
+			<ProjectItem ReplaceParameters="true" OpenInEditor="true" TargetFileName="GlobalUsings.cs">GlobalUsings.cs</ProjectItem>
 			<ProjectItem ReplaceParameters="true" TargetFileName="assets\assets文件夹说明.txt">assets文件夹说明.txt</ProjectItem>
 			<ProjectItem ReplaceParameters="true" TargetFileName="ref\ref文件夹说明.txt">ref文件夹说明.txt</ProjectItem>
 		</Project>

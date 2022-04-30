@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using astator.Core.Script;
-using $safeprojectname$.Core;
-
-namespace $safeprojectname$;
+﻿namespace $safeprojectname$;
 
 public class Program
 {

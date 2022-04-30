@@ -1,8 +1,6 @@
-﻿using System;
-using astator.Core.UI;
+﻿using astator.Core.UI;
 using astator.Core.UI.Floaty;
 using astator.Core.Threading;
-using astator.Core.Script;
 using Android.App;
 
 namespace $safeprojectname$.Core;

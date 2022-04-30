@@ -14,7 +14,9 @@
 	</ItemGroup>
 
 	<ProjectExtensions>
-		<IsObfuscate>True</IsObfuscate>
+		<IsObfuscate>true</IsObfuscate>
+		<UseOCR>false</UseOCR>
+		<BuildX86>true</BuildX86>
 		<ApkBuilderConfigs>
 			<Label>$safeprojectname$</Label>
 			<PackageName>com.script.$safeprojectname$</PackageName>
