@@ -25,7 +25,11 @@ namespace VisualStudioExt.Models
             {
                 client?.Dispose();
                 var mqttClientOptions = new MqttClientOptionsBuilder()
-                    .WithTcpServer(ip)
+                    .WithTcpServer((op) =>
+                    {
+                        op.Server = ip;
+                        op.BufferSize = 1024 * 1024 * 10;
+                    })
                     .WithKeepAlivePeriod(TimeSpan.FromMinutes(6))
                     .Build();
 
@@ -85,7 +89,7 @@ namespace VisualStudioExt.Models
             if (!isConnected || !(client?.IsConnected ?? false))
                 return false;
             else
-            return true;
+                return true;
         }
 
         private static async Task SendProjectAsync(string topic, string desc = default)

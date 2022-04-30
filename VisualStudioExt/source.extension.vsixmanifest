@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="astator-ext-vs.ECA7EF58-6677-453C-8B88-B92DF8F08486" Version="0.1.0" Language="en-US" Publisher="astator-ext" />
+        <Identity Id="astator-ext-vs.ECA7EF58-6677-453C-8B88-B92DF8F08486" Version="0.1.4" Language="en-US" Publisher="astator-ext" />
         <DisplayName>astator-ext-vs</DisplayName>
-        <Description xml:space="preserve">用于astator的脚本开发</Description>
-        <Icon>Resources\logo.png</Icon>
+        <Description xml:space="preserve">astator-ext-vs</Description>
     </Metadata>
     <Installation>
         <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0, 18.0)">

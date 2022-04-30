@@ -9,7 +9,7 @@
     Width="320"
     Height="205"
     Background="#f0f0f0"
-    Icon="pack://application:,,,/VisualStudioExt;component/Resources/logo.png"
+    Icon="pack://application:,,,/VisualStudioExt;component/Resources/icon.png"
     KeyDown="Window_KeyDown"
     WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">

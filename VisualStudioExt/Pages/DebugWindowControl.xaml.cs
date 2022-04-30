@@ -102,7 +102,8 @@ namespace VisualStudioExt.Pages
                 if (!string.IsNullOrEmpty(ip))
                 {
                     if (!Directory.Exists(extDir)) Directory.CreateDirectory(extDir);
-                    if (!historyDevices.Contains(ip)) historyDevices.Insert(0, ip);
+                    if (historyDevices.Contains(ip))  historyDevices.Remove(ip);
+                    historyDevices.Insert(0, ip);
                     File.WriteAllLines(historyDevicesPath, historyDevices);
                     this.ConnectLatestDevice.ToolTip = $"连接到最近的设备: {ip}";
 

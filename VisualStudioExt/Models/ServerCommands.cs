@@ -51,7 +51,6 @@ namespace VisualStudioExt.Models
                     await server.UnsubscribeAsync(e.ClientId,
                         "server/run-init",
                         "server/run-logging");
-                    server.Dispose();
                 });
 
                 server.UseApplicationMessageReceivedHandler(ApplicationMessageReceived);

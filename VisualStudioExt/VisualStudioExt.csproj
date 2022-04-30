@@ -102,6 +102,7 @@
     <Resource Include="Resources\clear.png" />
     <Resource Include="Resources\connect.png" />
     <Resource Include="Resources\history.png" />
+    <Resource Include="Resources\icon.png" />
     <Content Include="Resources\logo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
