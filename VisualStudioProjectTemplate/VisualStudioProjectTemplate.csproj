@@ -54,10 +54,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Runtime.cs" />
-    <None Include="GlobalUsings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <None Include="Test.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Program.cs" />
@@ -67,7 +64,6 @@
     <VSTemplate Include="VisualStudioProjectTemplate.vstemplate" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="favicon.ico" />
     <Content Include="ref文件夹说明.txt" />
     <Content Include="assets文件夹说明.txt" />
   </ItemGroup>

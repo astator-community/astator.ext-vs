@@ -1,9 +1,8 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <VSTemplate Version="3.0.0" Type="Project" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005" xmlns:sdk="http://schemas.microsoft.com/developer/vstemplate-sdkextension/2010">
 	<TemplateData>
 		<Name>astator项目</Name>
 		<Description>用于创建astator初始模板的项目</Description>
-		<Icon>favicon.ico</Icon>
 		<ProjectType>CSharp</ProjectType>
 		<LanguageTag>csharp</LanguageTag>
 		<SortOrder>1000</SortOrder>
@@ -18,10 +17,7 @@
 	</TemplateData>
 	<TemplateContent>
 		<Project TargetFileName="$safeprojectname$.csproj" File="ProjectTemplate.csproj" ReplaceParameters="true">
-			<ProjectItem ReplaceParameters="true" TargetFileName="Core\Runtime.cs">Runtime.cs</ProjectItem>
-			<ProjectItem ReplaceParameters="true" TargetFileName="Test.cs">Test.cs</ProjectItem>
 			<ProjectItem ReplaceParameters="true" OpenInEditor="true" TargetFileName="Program.cs">Program.cs</ProjectItem>
-			<ProjectItem ReplaceParameters="true" OpenInEditor="true" TargetFileName="GlobalUsings.cs">GlobalUsings.cs</ProjectItem>
 			<ProjectItem ReplaceParameters="true" TargetFileName="assets\assets文件夹说明.txt">assets文件夹说明.txt</ProjectItem>
 			<ProjectItem ReplaceParameters="true" TargetFileName="ref\ref文件夹说明.txt">ref文件夹说明.txt</ProjectItem>
 		</Project>

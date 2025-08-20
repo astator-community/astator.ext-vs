@@ -1,89 +1,144 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.IO;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using Nerdbank.Streams;
 
-namespace VisualStudioExt.Models.Base
+namespace VisualStudioExt.Models.Base { }
+
+public struct PackPayload
 {
-    public class PackData
+    public byte[] Header { get; set; }
+    public byte[] Body { get; set; }
+}
+
+internal enum DebugType
+{
+    Init = 1,
+    Logging = 10,
+    RunProject = 11,
+    SaveProject = 100,
+    ScreenShot = 101,
+    heartBeat = 110,
+}
+
+internal struct DebugPayload
+{
+    public DebugType Type { get; set; }
+    public byte[] Body { get; set; }
+}
+
+public static class PackDataExtension
+{
+    public static byte[] ToBytes(this PackPayload payload)
     {
-        public string Key { get; set; }
+        var size = 8 + (payload.Body?.Length ?? 0);
+        using var ms = new MemoryStream(size + 4);
+        ms.WriteInt32(size);
 
-        public string Description { get; set; }
+        ms.Write(payload.Header, 0, 8);
 
-        public byte[] Buffer { get; set; }
-
-
-        public byte[] ToBytes()
+        if (payload.Body != null)
         {
-            var size = 4 + 4 + 256 + 4 + 256 + 4 + (this.Buffer?.Length ?? 0);
-            using var ms = new MemoryStream(size);
-            ms.WriteInt32(size - 4);
-
-            var keyBytes = Encoding.UTF8.GetBytes(this.Key);
-            ms.WriteInt32(keyBytes.Length);
-            ms.Write(keyBytes, 0, keyBytes.Length);
-
-            if (this.Description != null)
-            {
-                ms.Position = 4 + 4 + 256;
-                var descBytes = Encoding.UTF8.GetBytes(this.Description);
-                ms.WriteInt32(descBytes.Length);
-                ms.Write(descBytes, 0, descBytes.Length);
-            }
-
-            if (this.Buffer != null)
-            {
-                ms.Position = 4 + 4 + 256 + 4 + 256;
-                ms.WriteInt32(this.Buffer.Length);
-                ms.Write(this.Buffer, 0, this.Buffer.Length);
-            }
-
-            return ms.GetBuffer();
+            ms.Position = 4 + 8;
+            ms.Write(payload.Body, 0, payload.Body.Length);
         }
 
-        public static PackData Parse(byte[] bytes)
+        return ms.GetBuffer();
+    }
+
+    public static PackPayload ToPackPayload(this byte[] bytes)
+    {
+        var result = new PackPayload();
+
+        var ms = bytes.AsMemory();
+        result.Header = ms.Slice(0, 8).ToArray();
+        result.Body = ms.Slice(8).ToArray();
+
+        return result;
+    }
+
+    internal static byte[] ToBytes(this DebugPayload payload)
+    {
+        var size = 8 + (payload.Body?.Length ?? 0);
+        using var ms = new MemoryStream(size + 4);
+        ms.WriteInt32(size);
+
+        ms.WriteInt32((int)payload.Type);
+
+        if (payload.Body != null)
         {
-            if (bytes is null) return null;
-
-            try
-            {
-                var result = new PackData();
-                using var ms = new MemoryStream(bytes);
-                ms.Position = 4;
-                var keySize = ms.ReadInt32();
-                var keyBytes = new byte[keySize];
-                ms.Read(keyBytes, 0, keySize);
-                var key = Encoding.UTF8.GetString(keyBytes);
-                result.Key = key;
-
-                ms.Position = 4 + 4 + 256;
-                var descSize = ms.ReadInt32();
-                if (descSize > 0)
-                {
-                    var descBytes = new byte[descSize];
-                    ms.Read(descBytes, 0, descSize);
-                    var desc = Encoding.UTF8.GetString(descBytes);
-                    result.Description = desc;
-                }
-
-                ms.Position = 4 + 4 + 256 + 4 + 256;
-                var bufferSize = ms.ReadInt32();
-                if (bufferSize > 0)
-                {
-                    var buffer = new byte[bufferSize];
-                    ms.Read(buffer, 0, buffer.Length);
-                    result.Buffer = buffer;
-                }
-
-                return result;
-            }
-            catch
-            {
-                return null;
-            }
+            ms.Position = 4 + 8;
+            ms.Write(payload.Body, 0, payload.Body.Length);
         }
+
+        return ms.GetBuffer();
+    }
+
+    internal static DebugPayload ToDebugPayload(this byte[] bytes)
+    {
+        var result = new DebugPayload();
+
+        var ms = bytes.AsMemory();
+        result.Type = (DebugType)ms.Slice(0, 4).ToArray().ToInt32();
+        result.Body = ms.Slice(8).ToArray();
+
+        return result;
+    }
+
+    internal static byte[] ToHeader(this DebugType type)
+    {
+        var i32 = (int)type;
+        var bytes = new byte[8];
+        bytes[0] = (byte)(i32 >> 24);
+        bytes[1] = (byte)(i32 >> 16);
+        bytes[2] = (byte)(i32 >> 8);
+        bytes[3] = (byte)i32;
+        return bytes;
+    }
+
+    public static byte[] ToBytes(this int i32)
+    {
+        var bytes = new byte[4];
+        bytes[0] = (byte)(i32 >> 24);
+        bytes[1] = (byte)(i32 >> 16);
+        bytes[2] = (byte)(i32 >> 8);
+        bytes[3] = (byte)i32;
+        return bytes;
+    }
+
+    public static int ToInt32(this byte[] value, int offset = 0)
+    {
+        int result;
+        result = value[offset] << 24 | value[offset + 1] << 16 | value[offset + 2] << 8 | value[offset + 3];
+        return result;
+    }
+
+    public static void WriteInt32(this Stream stream, int i32)
+    {
+        stream.Write(i32.ToBytes(), 0, 4);
+    }
+
+    public static int ReadInt32(this Stream stream)
+    {
+        var bytes = new byte[4];
+        stream.Read(bytes, 0, 4);
+        return bytes.ToInt32();
+    }
+
+    public static async Task<byte[]> ReadBlockAsync(
+        this Stream stream,
+        int length,
+        CancellationToken cancelToken = default
+    )
+    {
+        var result = new byte[length];
+        var memory = result.AsMemory();
+
+        var offset = 0;
+        while (offset < length)
+            offset += await stream.ReadBlockAsync(memory.Slice(offset), cancelToken);
+
+        return result;
     }
 }

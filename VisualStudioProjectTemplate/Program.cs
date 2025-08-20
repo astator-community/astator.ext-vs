@@ -1,12 +1,15 @@
-﻿namespace $safeprojectname$;
+using System;
+using Astator.Script;
+
+namespace $safeprojectname$;
 
 public class Program
 {
-    [ProjectEntryMethod(IsUIMode = false)]
-    public static void Main(ScriptRuntime runtime)
+    [EntryMethod]
+    public static void Main(string workDir)
     {
-        Runtime.Instance = runtime;
-        Console.WriteLine("我是项目入口方法");
+        {
+            Console.WriteLine("Hello world");
+        }
     }
 }
-

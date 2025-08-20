@@ -1,100 +1,119 @@
-﻿using MQTTnet;
-using MQTTnet.Client;
-using MQTTnet.Client.Options;
 using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
-using VisualStudioExt.Models.Base;
+using EasyCompressor;
+using Nerdbank.Streams;
 using VisualStudioExt.Pages;
 
 namespace VisualStudioExt.Models
 {
     public static class ClientCommands
     {
-        private static IMqttClient client;
-        private static bool isConnected;
+        private static TcpClient client;
+        private static SnappierCompressor compressor;
+        private static readonly CancellationTokenSource cancelTokenSource =
+            new CancellationTokenSource();
 
-        public static async Task ConnectAsync(string ip)
+        public static void Connect(string ip)
         {
-            try
+            _ = Task.Run(() =>
             {
-                client?.Dispose();
-                var mqttClientOptions = new MqttClientOptionsBuilder()
-                    .WithTcpServer((op) =>
-                    {
-                        op.Server = ip;
-                        op.BufferSize = 1024 * 1024 * 10;
-                    })
-                    .WithKeepAlivePeriod(TimeSpan.FromMinutes(6))
-                    .Build();
-
-                var mqttFactory = new MqttFactory();
-                client = mqttFactory.CreateMqttClient();
-
-                client.UseApplicationMessageReceivedHandler(ApplicationMessageReceived);
-                client.UseConnectedHandler(async (e) =>
+                try
                 {
-                    isConnected = true;
-                    await client.SubscribeAsync(
-                        new MqttTopicFilter
-                        {
-                            Topic = "server/init"
-                        },
-                        new MqttTopicFilter
-                        {
-                            Topic = "server/logging"
-                        });
-
-                    await client.PublishAsync("client/init");
-                });
-                client.UseDisconnectedHandler(async (e) =>
-                {
-                    DebugWindowControl.AddLogging("断开连接");
-                    await client.UnsubscribeAsync("server/init", "server/logging");
-                    client.Dispose();
-                    isConnected = false;
-                });
-
-                await client.ConnectAsync(mqttClientOptions, CancellationToken.None);
-            }
-            catch (Exception ex)
-            {
-                DebugWindowControl.AddLogging(ex.Message);
-            }
+                    client?.Dispose();
+                    client = new TcpClient(ip, 8883);
+                    Connect(client, cancelTokenSource.Token);
+                }
+                catch { }
+            });
         }
 
-        private static void ApplicationMessageReceived(MqttApplicationMessageReceivedEventArgs e)
-        {
-            var pack = PackData.Parse(e.ApplicationMessage.Payload);
-            if (pack is null) return;
+        private static Stream output;
 
-            switch (e.ApplicationMessage.Topic)
-            {
-                case "server/init":
-                    DebugWindowControl.AddLogging($"连接设备成功: {pack.Key} {pack.Description}");
-                    break;
-                case "server/logging":
-                    DebugWindowControl.AddLogging($"{pack.Key} {Encoding.UTF8.GetString(pack.Buffer)}");
-                    break;
-            }
+        private static void Connect(TcpClient client, CancellationToken cancelToken)
+        {
+            _ = Task.Run(
+                async () =>
+                {
+                    using var stream = client.GetStream();
+
+                    var options = new MultiplexingStream.Options
+                    {
+                        DefaultChannelReceivingWindowSize = 1024 * 1024 * 8,
+                        ProtocolMajorVersion = 3,
+                    };
+                    var multiplexor = await MultiplexingStream.CreateAsync(stream, options);
+
+                    var inputChannel = await multiplexor.AcceptChannelAsync("input", cancelToken);
+                    var outputChannel = await multiplexor.AcceptChannelAsync("output", cancelToken);
+
+                    using var input = inputChannel.AsStream();
+                    output = outputChannel.AsStream();
+
+                    var initPayload = new DebugPayload { Type = DebugType.Init };
+                    var initData = initPayload.ToBytes();
+                    await output.WriteAsync(initData, 0, initData.Length);
+
+                    while (!cancelToken.IsCancellationRequested)
+                    {
+                        var length = (await input.ReadBlockAsync(4, cancelToken)).ToInt32();
+                        var payload = (
+                            await input.ReadBlockAsync(length, cancelToken)
+                        ).ToDebugPayload();
+
+                        switch (payload.Type)
+                        {
+                            case DebugType.Init:
+                            {
+                                var info = Encoding.UTF8.GetString(payload.Body);
+                                _ = DebugWindowControl.AddLoggingAsync($"连接设备成功: {info} ");
+                                break;
+                            }
+                            case DebugType.Logging:
+                            {
+                                _ = DebugWindowControl.AddLoggingAsync(
+                                    Encoding.UTF8.GetString(payload.Body)
+                                );
+                                break;
+                            }
+                            case DebugType.RunProject:
+                            {
+                                _ = RunProjectAsync();
+                                break;
+                            }
+                            case DebugType.SaveProject:
+                            {
+                                _ = SaveProjectAsync();
+                                break;
+                            }
+                            case DebugType.ScreenShot:
+                                break;
+                        }
+                    }
+                    output.Dispose();
+                    output = null;
+
+                    inputChannel.Dispose();
+                    outputChannel.Dispose();
+                },
+                cancelToken
+            );
         }
 
         public static bool CheckIsConnected()
         {
-            if (!isConnected || !(client?.IsConnected ?? false))
-                return false;
-            else
-                return true;
+            return output != null;
         }
 
-        private static async Task SendProjectAsync(string topic, string desc = default)
+        private static async Task SendProjectAsync(DebugType type)
         {
-            var rootDir = $"{VisualStudioExtPackage.GetProjectDir()}{Path.DirectorySeparatorChar}";
+            var rootDir =
+                $"{await DebugWindowControl.GetProjectDirAsync()}{Path.DirectorySeparatorChar}";
             var ignoreDirs = new[]
             {
                 Path.Combine(rootDir, ".vs"),
@@ -104,7 +123,7 @@ namespace VisualStudioExt.Models
                 Path.Combine(rootDir, "obj"),
             };
 
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
                 using var ms = new MemoryStream();
                 var zip = new ZipArchive(ms, ZipArchiveMode.Create);
@@ -119,47 +138,50 @@ namespace VisualStudioExt.Models
                         continue;
                     }
 
-                    var files = Directory.GetFiles(dir, "*", dir == rootDir ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories);
+                    var files = Directory.GetFiles(
+                        dir,
+                        "*",
+                        dir == rootDir ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories
+                    );
                     foreach (var f in files)
                     {
-                        var relativePath = f.Replace(rootDir, default).Replace(Path.DirectorySeparatorChar, '/');
+                        var relativePath = f.Replace(rootDir, default)
+                            .Replace(Path.DirectorySeparatorChar, '/');
                         var entry = zip.CreateEntry(relativePath);
                         using var stream = entry.Open();
                         using var fs = new FileStream(f, FileMode.Open, FileAccess.Read);
-                        fs.CopyTo(stream);
+                        await fs.CopyToAsync(stream);
                     }
                 }
 
                 zip.Dispose();
-                var bytes = ms.ToArray();
+                var zipBytes = ms.ToArray();
                 var directories = rootDir.Split(Path.DirectorySeparatorChar);
-                var id = directories[directories.Length - 2];
-                var packData = Stick.MakePackData(id, desc ?? string.Empty, bytes);
-                _ = client.PublishAsync(topic, packData);
+                var id = Encoding.UTF8.GetBytes(directories[directories.Length - 2]);
+
+                compressor ??= new SnappierCompressor();
+                var compressData = compressor.Compress(zipBytes);
+
+                var bodyStream = new MemoryStream(4 + id.Length + compressData.Length);
+                bodyStream.WriteInt32(id.Length);
+                await bodyStream.WriteAsync(id, 0, id.Length);
+                await bodyStream.WriteAsync(compressData, 0, compressData.Length);
+                var bytes = bodyStream.ToArray();
+
+                var payload = new DebugPayload { Type = type, Body = bytes };
+                var data = payload.ToBytes();
+                await output.WriteAsync(data, 0, data.Length);
             });
         }
 
         public static async Task RunProjectAsync()
         {
-            await SendProjectAsync("client/run-project");
-        }
-
-        public static async Task RunScriptAsync()
-        {
-            var scriptPathName = VisualStudioExtPackage.GetActiveDocumentName();
-
-            if (scriptPathName == null)
-            {
-                MessageBox.Show("未找到已激活文档窗口!");
-                return;
-            };
-
-            await SendProjectAsync("client/run-script", scriptPathName);
+            await SendProjectAsync(DebugType.RunProject);
         }
 
         public static async Task SaveProjectAsync()
         {
-            await SendProjectAsync("client/save-project");
+            await SendProjectAsync(DebugType.SaveProject);
         }
     }
 }

@@ -46,7 +46,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Models\Base\Stick.cs" />
     <Compile Include="Models\Base\PackData.cs" />
     <Compile Include="Models\ClientCommands.cs" />
     <Compile Include="Models\ServerCommands.cs" />
@@ -83,10 +82,18 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.32112.339" ExcludeAssets="runtime" />
-    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.2.1087-preview2" />
-    <PackageReference Include="MQTTnet">
-      <Version>3.1.2</Version>
+    <PackageReference Include="EasyCompressor.Snappier">
+      <Version>2.0.2</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.11.40262" ExcludeAssets="runtime">
+      <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.11.435">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Nerdbank.Streams">
+      <Version>2.11.79</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
@@ -99,16 +106,15 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Resources\server.png" />
     <Resource Include="Resources\clear.png" />
     <Resource Include="Resources\connect.png" />
     <Resource Include="Resources\history.png" />
-    <Resource Include="Resources\icon.png" />
-    <Content Include="Resources\logo.png">
+    <Content Include="astator_icon.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Resource Include="Resources\run_1.png" />
-    <Resource Include="Resources\run_2.png" />
     <Resource Include="Resources\save.png" />
   </ItemGroup>
   <ItemGroup>
